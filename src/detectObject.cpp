@@ -6,7 +6,7 @@
 #include "ardrone_object_tracking/detectObject.hpp"
 
 // Image processing function
-cv::Mat processImg(cv::Mat frame, int hue, int sat, int val) {
+cv::Mat processImg(cv::Mat frame, int hue, int sat, int val, int width) {
 
     // Create object for eroding (2x2 rectangle)
     cv::Mat erode_rect = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2));
@@ -20,7 +20,7 @@ cv::Mat processImg(cv::Mat frame, int hue, int sat, int val) {
     cv::cvtColor( frame, frame_hsv, CV_BGR2HSV );
 
     //Mask
-    cv::inRange( frame_hsv, cv::Scalar(hue-40,sat,val), cv::Scalar(hue+40,255,255), frame_threshold);
+    cv::inRange( frame_hsv, cv::Scalar(hue-width,sat,val), cv::Scalar(hue+width,255,255), frame_threshold);
 
     cv::erode(frame_threshold, frame_threshold, erode_rect, cv::Point(-1,-1),2);
     cv::dilate(frame_threshold, frame_threshold, dilate_rect, cv::Point(-1,-1), 2);

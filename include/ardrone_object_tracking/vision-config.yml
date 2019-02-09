@@ -1,0 +1,11 @@
+%YAML:1.0
+---
+CreationDate: "Sun Feb 9 2:53:19 2019\n"
+
+## Image processing parameters ##
+
+# Defines the region of interest in the rectified left camera frame
+hue: 53
+sat: 80
+val: 100
+width: 25

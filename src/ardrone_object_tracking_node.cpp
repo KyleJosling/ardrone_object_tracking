@@ -14,111 +14,144 @@
 #include <stdio.h>
 
 #include "ardrone_object_tracking/detectObject.hpp"
+#include "ardrone_object_tracking/ObjectMsg.h"
 
 #define GUI
-class ardrone_object_tracking {
 
-   public:
-      
-      // Initialization list
-      ardrone_object_tracking():
-         
-         // Initialize image transport instance
-         it(nH)
-         
-         // Initialize subscriber
-         { 
-            arImageSub = it.subscribe(arImageTopic, 1, &ardrone_object_tracking::imageCallback, this);
+
+class ardrone_object_tracker {
+
+    public:
+
+        // Initialization list
+        ardrone_object_tracker():
+
+        // Initialize image transport instance
+        it(nH)
+
+        // Initialize subscriber
+        { 
+            arImageSub = it.subscribe(arImageTopic, 1, &ardrone_object_tracker::imageCallback, this);
             tracker = cv::TrackerKCF::create();
+            setParams();
 
-         }
+        }
 
-      void imageCallback(const sensor_msgs::ImageConstPtr &image_msg) {
+        void imageCallback(const sensor_msgs::ImageConstPtr &image_msg) {
 
-         try {
-            frame = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
-            
-            // Flip to hsv
-            frame = processImg(frame, 145, 50, 65);
+            try {
 
-            if (frameCount = 0 || frameCount > 10) {
-                
-                // Get roi
-                roi = detectObject(frame);
+                frame = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
 
-                if (roi.height > 0) {
-                    tracker.release();
-                    tracker = cv::TrackerKCF::create();
-                    tracker->init(frame, roi);
-                    frameCount = 1;
+                // Flip to hsv
+                frame = processImg(frame, hue, sat, val, width);
+
+                if (frameCount = 0 || frameCount > 10) {
+
+                    // Get roi
+                    roi = detectObject(frame);
+
+                    if (roi.height > 0) {
+                        tracker.release();
+                        tracker = cv::TrackerKCF::create();
+                        tracker->init(frame, roi);
+                        frameCount = 1;
+                    }
+
+                } else {
+
+                    ok = tracker->update(frame, roi);
+                    
+                    // If everything is cool, publish message
+                    if (ok) { 
+                        msg.x = roi.x;
+                        msg.y = roi.y;
+                        msg.height = roi.height;
+                        objectPub.publish(msg);
+                    }
+
                 }
 
-            } else {
-
-                ok = tracker->update(frame, roi);
-
-                if (ok) {
-
-
-                }
-
-            }
             frameCount++;
 
-         #ifdef GUI
-            cv::imshow("Node", frame); 
-            cv::waitKey(30);
-         #endif
+            #ifdef GUI
+                cv::imshow("Node", frame); 
+                cv::waitKey(30);
+            #endif
 
-         } catch (cv_bridge::Exception &e) {
-            ROS_ERROR("Image encoding error %s", e.what());
-         }
+            } catch (cv_bridge::Exception &e) {
+                ROS_ERROR("Image encoding error %s", e.what());
+            }
 
-      }
+        }
+        
+        // Set parameters using yaml file
+        void setParams() {
 
-   private:
-      const std::string arImageTopic = "/ardrone/front/image_raw";
-      const std::string controlTopic = "";
+            cv::FileStorage fs("/home/kylejosling/ros_ws/src/ardrone_object_tracking/include/ardrone_object_tracking/vision-config.yml", cv::FileStorage::READ);
 
-      ros::NodeHandle nH;
-      image_transport::ImageTransport it;
-      
-      // Image transport subscriber
-      image_transport::Subscriber arImageSub;
+            if (!fs.isOpened())
+            {
+                ROS_ERROR("Failed to open config file.");
+                return;
+            }
 
-      // Publisher
-      ros::Publisher controlPub;
-      
-      // CV variables
-      bool ok;
-      int frameCount = 0;
+            // Set horizontal cutoff border
+            fs["hue"] >> hue;
+            fs["sat"] >> sat;
+            fs["val"] >> val;
+            fs["width"] >> width;
 
-      cv::Mat frame;
-      cv::Rect2d roi;
-      cv::Ptr<cv::TrackerKCF> tracker;
+            // Close the YAML file
+            fs.release();
+        }
+
+
+    private:
+        const std::string arImageTopic = "/ardrone/front/image_raw";
+        const std::string controlTopic = "";
+
+        ros::NodeHandle nH;
+        image_transport::ImageTransport it;
+
+        // Image transport subscriber
+        image_transport::Subscriber arImageSub;
+
+        // Publisher
+        ros::Publisher objectPub;
+        ardrone_object_tracking::ObjectMsg msg;
+
+        // CV variables
+        bool ok;
+        int frameCount = 0;
+        int hue, sat, val, width;
+
+        cv::Mat frame;
+        cv::Rect2d roi;
+        cv::Ptr<cv::TrackerKCF> tracker;
 
 };
 
 
 int main(int argc, char** argv) {
-   
-   std::string nodeName = "ardrone_object_tracking_node";
-   ros::init(argc, argv, nodeName);
 
-   ardrone_object_tracking ar;
-   
-   
-   #ifdef GUI
-      // OpenCV declares
-      std::string windowName = "ardrone";
-      cv::namedWindow(windowName, cv::WINDOW_NORMAL);
-      cv::startWindowThread();
-   #endif
+    std::string nodeName = "ardrone_object_tracking_node";
+    ros::init(argc, argv, nodeName);
 
-   ros::spin();
-   
-   #ifdef GUI
-      cv::destroyWindow(windowName);
-   #endif
-   return 0;
+    ardrone_object_tracker ar;
+
+
+    #ifdef GUI
+        // OpenCV declares
+        std::string windowName = "ardrone";
+        cv::namedWindow(windowName, cv::WINDOW_NORMAL);
+        cv::startWindowThread();
+    #endif
+
+    ros::spin();
+
+    #ifdef GUI
+        cv::destroyWindow(windowName);
+    #endif
+    return 0;
 }

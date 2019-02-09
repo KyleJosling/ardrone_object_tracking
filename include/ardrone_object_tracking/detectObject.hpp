@@ -10,5 +10,5 @@ struct obj_point {
 
 };
 
-cv::Mat processImg(cv::Mat frame, int hue, int sat, int val); 
+cv::Mat processImg(cv::Mat frame, int hue, int sat, int val, int width); 
 cv::Rect2d detectObject(cv::Mat frame_threshold);

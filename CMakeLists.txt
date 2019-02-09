@@ -25,18 +25,17 @@ find_package(OpenCV REQUIRED)
 ################################################
 
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+# Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  ObjectMsg.msg
+)
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+# Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -53,7 +52,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ardrone_object_tracking
-  CATKIN_DEPENDS ardrone_autonomy roscpp std_msgs
+  CATKIN_DEPENDS ardrone_autonomy roscpp std_msgs message_runtime
   DEPENDS system_lib
 )
 
@@ -83,19 +82,14 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/ardrone_object_tracking_node.cpp src/detectObject.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}_node
+   ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
+ )
+add_definitions(-std=c++11 -g -O3)
+
+add_executable(control_node src/control_node.cpp)
+ target_link_libraries(control_node
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
  )
