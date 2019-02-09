@@ -13,6 +13,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "ardrone_object_tracking/detectObject.hpp"
+
 #define GUI
 class ardrone_object_tracking {
 
@@ -27,15 +29,44 @@ class ardrone_object_tracking {
          // Initialize subscriber
          { 
             arImageSub = it.subscribe(arImageTopic, 1, &ardrone_object_tracking::imageCallback, this);
+            tracker = cv::TrackerKCF::create();
+
          }
 
       void imageCallback(const sensor_msgs::ImageConstPtr &image_msg) {
 
          try {
-            ROS_INFO("Got image.");
-            rawImage = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
+            frame = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
+            
+            // Flip to hsv
+            frame = processImg(frame, 145, 50, 65);
+
+            if (frameCount = 0 || frameCount > 10) {
+                
+                // Get roi
+                roi = detectObject(frame);
+
+                if (roi.height > 0) {
+                    tracker.release();
+                    tracker = cv::TrackerKCF::create();
+                    tracker->init(frame, roi);
+                    frameCount = 1;
+                }
+
+            } else {
+
+                ok = tracker->update(frame, roi);
+
+                if (ok) {
+
+
+                }
+
+            }
+            frameCount++;
+
          #ifdef GUI
-            cv::imshow("Node", rawImage); 
+            cv::imshow("Node", frame); 
             cv::waitKey(30);
          #endif
 
@@ -58,8 +89,14 @@ class ardrone_object_tracking {
       // Publisher
       ros::Publisher controlPub;
       
-      // CV Matrices
-      cv::Mat rawImage;
+      // CV variables
+      bool ok;
+      int frameCount = 0;
+
+      cv::Mat frame;
+      cv::Rect2d roi;
+      cv::Ptr<cv::TrackerKCF> tracker;
+
 };
 
 
