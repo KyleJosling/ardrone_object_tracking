@@ -35,12 +35,18 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
+################################################
+## Find libraries
+################################################
+link_directories(/usr/local/lib)
+find_library(pid_LIBRARY pid)
 
 ###################################
 ## catkin specific configuration ##
@@ -52,7 +58,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ardrone_object_tracking
-  CATKIN_DEPENDS ardrone_autonomy roscpp std_msgs message_runtime
+  CATKIN_DEPENDS ardrone_autonomy roscpp std_msgs geometry_msgs message_runtime
   DEPENDS system_lib
 )
 
@@ -92,6 +98,7 @@ add_executable(control_node src/control_node.cpp)
  target_link_libraries(control_node
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
+   ${pid_LIBRARY}
  )
 add_definitions(-std=c++11 -g -O3)
 
