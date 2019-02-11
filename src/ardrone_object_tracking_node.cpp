@@ -29,8 +29,10 @@ class ardrone_object_tracker {
         // Initialize image transport instance
         it(nH)
 
-        // Initialize subscriber
         { 
+            // Initialize publisher 
+            objectPub = nH.advertise<ardrone_object_tracking::ObjectMsg>(objectTopic, 1000);
+            // Initialize subscriber
             arImageSub = it.subscribe(arImageTopic, 1, &ardrone_object_tracker::imageCallback, this);
             tracker = cv::TrackerKCF::create();
             setParams();
@@ -41,17 +43,21 @@ class ardrone_object_tracker {
 
             try {
 
-                frame = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
+                static int frameCount = 0;
+                cv::Mat original;
+                original = cv_bridge::toCvCopy(image_msg, "bgr8")->image;
 
                 // Flip to hsv
-                frame = processImg(frame, hue, sat, val, width);
+                frame = processImg(original, hue, sat, val, width);
 
-                if (frameCount = 0 || frameCount > 10) {
+                if (frameCount == 0 || frameCount > 10) {
 
                     // Get roi
                     roi = detectObject(frame);
+                    ROS_INFO("Getting object");
 
                     if (roi.height > 0) {
+                        ROS_INFO("Height > 0");
                         tracker.release();
                         tracker = cv::TrackerKCF::create();
                         tracker->init(frame, roi);
@@ -64,18 +70,20 @@ class ardrone_object_tracker {
                     
                     // If everything is cool, publish message
                     if (ok) { 
-                        msg.x = roi.x;
-                        msg.y = roi.y;
+                        msg.x = roi.x + (roi.width/2);
+                        msg.y = roi.y + (roi.height/2);
                         msg.height = roi.height;
                         objectPub.publish(msg);
                     }
 
+                    frameCount++;
                 }
 
-            frameCount++;
 
             #ifdef GUI
-                cv::imshow("Node", frame); 
+                cv::rectangle(original, roi.tl(),roi.br(),cv::Scalar(0,255,0),2,8);
+                cv::imshow("Node", original); 
+                cv::imshow("Node1", frame); 
                 cv::waitKey(30);
             #endif
 
@@ -109,7 +117,7 @@ class ardrone_object_tracker {
 
     private:
         const std::string arImageTopic = "/ardrone/front/image_raw";
-        const std::string controlTopic = "";
+        const std::string objectTopic = "/object";
 
         ros::NodeHandle nH;
         image_transport::ImageTransport it;
@@ -123,7 +131,6 @@ class ardrone_object_tracker {
 
         // CV variables
         bool ok;
-        int frameCount = 0;
         int hue, sat, val, width;
 
         cv::Mat frame;

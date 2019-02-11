@@ -5,7 +5,7 @@ CreationDate: "Sun Feb 9 2:53:19 2019\n"
 ## Image processing parameters ##
 
 # Defines the region of interest in the rectified left camera frame
-hue: 53
-sat: 80
+hue: 200 
+sat: 100
 val: 100
-width: 25
+width: 30
