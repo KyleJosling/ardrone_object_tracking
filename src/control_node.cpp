@@ -1,14 +1,19 @@
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "pid.h"
-
+#include <signal.h>
 #include <iostream>
 #include <stdio.h>
+
+#include "pid.h"
 
 #include <ardrone_object_tracking/ObjectMsg.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
+
+
+
+sig_atomic_t volatile g_request_shutdown = 0;
 
 class controller {
 
@@ -29,19 +34,20 @@ class controller {
             landingPub = nH.advertise<std_msgs::Empty>(landingTopic, 1000);
             
             startupRoutine();
-
         }
 
         ~controller() {
-            ROS_INFO("Destructor called");
+            sendCommand( 0, 0, 0, 0);
             std_msgs::Empty msg; 
             landingPub.publish(msg);
         }
         
+
         void objectCallback(const ardrone_object_tracking::ObjectMsg::ConstPtr &objectPos) {
 
             yawPVar = objectPos->x;
             yawOutput = (yawPid.calculate(yawSVar, yawPVar));
+
             // Normalize
             yawOutput = yawOutput/320;
             ROS_INFO("Received object position: ");
@@ -88,6 +94,17 @@ class controller {
 
         }
 
+        void shutdownRoutine() {
+            
+            ROS_INFO("Landing");
+
+            // Set to hover mode
+            sendCommand( 0, 0, 0, 0);
+            std_msgs::Empty msg; 
+            landingPub.publish(msg);
+
+        }
+
     private:
         const std::string takeoffTopic = "/ardrone/takeoff";
         const std::string landingTopic = "/ardrone/land";
@@ -114,17 +131,24 @@ class controller {
 
 };
 
+void sigintHandler (int sig) {
+    g_request_shutdown = 1;
+}
 
 int main(int argc, char** argv) {
 
-
     std::string nodeName = "control_node";
-    ros::init(argc, argv, nodeName);
+    ros::init(argc, argv, nodeName, ros::init_options::NoSigintHandler);
+    signal(SIGINT, sigintHandler);
 
     controller c;
+    
+    while (!g_request_shutdown) {
+        ros::spinOnce();
+    }
 
-    ros::spin();
-
+    c.shutdownRoutine(); 
+    ros::shutdown();
     return 0;
 
 }
