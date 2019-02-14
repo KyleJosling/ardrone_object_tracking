@@ -21,9 +21,10 @@ class controller {
         
         controller():
         
-        // Initialize PID controller
+        // Initialize PID controllers
         // ( double dt, double max, double min, double Kp, double Kd, double Ki );
-        yawPid(0.1, 320, -320, 0.702, 4.9, 0.00006) { 
+        yawPid(0.1, 1.0, -1.0, 0.702, 4.9, 0.00006),
+        pitchPid(0.1, 1.0, -1.0, 0.702, 4.9, 0.00006) { 
 
             // Subscriber for object location
             objectSub = nH.subscribe(objectTopic, 1, &controller::objectCallback, this);
@@ -47,9 +48,9 @@ class controller {
 
             yawPVar = objectPos->x;
             yawOutput = (yawPid.calculate(yawSVar, yawPVar));
+            pitchPVar = objectPos->height;
+            pitchOutput = (pitchPid.calculate(pitchSVar, pitchPVar));
 
-            // Normalize
-            yawOutput = yawOutput/320;
             ROS_INFO("Received object position: ");
             ROS_INFO(" X: %f , Y: %f, H : %f \n", objectPos->x, objectPos->y, objectPos->height);
             ROS_INFO("Yaw output : %f", yawOutput);
@@ -123,11 +124,15 @@ class controller {
 
         // PID controller variables
         PID yawPid;
+        PID pitchPid;
 
         int yawSVar = 320;
         int yawPVar;
+        int pitchSVar = 320;
+        int pitchPVar;
 
         double yawOutput;
+        double pitchOutput;
 
 };
 
