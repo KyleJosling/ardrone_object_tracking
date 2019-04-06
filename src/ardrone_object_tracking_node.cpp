@@ -16,8 +16,6 @@
 #include "ardrone_object_tracking/detectObject.hpp"
 #include "ardrone_object_tracking/ObjectMsg.h"
 
-#define GUI
-
 
 class ardrone_object_tracker {
 

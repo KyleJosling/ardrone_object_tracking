@@ -58,13 +58,12 @@ cv::Rect2d detectObject(cv::Mat frame_threshold) {
 
     // If no contours found then mean point is 0
     if (largest_contour_area == 0 || largest_contour_area < 400) {
-        std::cout<< "No objects found " << std::endl;
         return cv::Rect2d(0,0,0,0);
     } else {
         return cv::boundingRect(cv::Mat(contours[largest_contour_no]));
     }
     
-    #ifdef DISPLAY
+    #ifdef GUI 
     cv::namedWindow("video", CV_WINDOW_AUTOSIZE);
     cv::resizeWindow("Final", 500,500);
     cv::imshow("video1", frame_threshold);

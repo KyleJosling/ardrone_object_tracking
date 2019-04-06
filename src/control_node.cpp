@@ -11,7 +11,6 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
 
-//#define NO_FLY
 
 sig_atomic_t volatile g_request_shutdown = 0;
 
@@ -24,7 +23,7 @@ class controller {
         // Initialize PID controllers
         // ( double dt, double max, double min, double Kp, double Kd, double Ki );
         yawPid(0.1, 1.0, -1.0, 2, 0, 0),
-        pitchPid(0.1, 1.0, -1.0, 0.702, 4.9, 0.00006) { 
+        pitchPid(0.1, 1.0, -1.0, 3, 0, 0) { 
 
             // Subscriber for object location
             objectSub = nH.subscribe(objectTopic, 1, &controller::objectCallback, this);
@@ -49,7 +48,7 @@ class controller {
             // Normalize process variable
             yawPVar = (objectPos->x)/640;
             yawOutput = (yawPid.calculate(yawSVar, yawPVar));
-            pitchPVar = objectPos->height;
+            pitchPVar = (objectPos->height)/320;
             pitchOutput = (pitchPid.calculate(pitchSVar, pitchPVar));
 
             ROS_INFO("Received object position: ");
@@ -134,7 +133,7 @@ class controller {
 
         double yawSVar = 0.5;
         double yawPVar;
-        double pitchSVar = 220;
+        double pitchSVar = 0.5;
         double pitchPVar;
 
         double yawOutput;

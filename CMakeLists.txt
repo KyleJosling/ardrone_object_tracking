@@ -93,6 +93,7 @@ add_executable(${PROJECT_NAME}_node src/ardrone_object_tracking_node.cpp src/det
    ${OpenCV_LIBRARIES}
  )
 add_definitions(-std=c++11 -g -O3)
+add_definitions(-DGUI)
 
 add_executable(control_node src/control_node.cpp)
  target_link_libraries(control_node
@@ -101,6 +102,7 @@ add_executable(control_node src/control_node.cpp)
    ${pid_LIBRARY}
  )
 add_definitions(-std=c++11 -g -O3)
+add_definitions(-DNO_FLY)
 
 #############
 ## Install ##
