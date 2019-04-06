@@ -11,7 +11,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
 
-
+#define NO_FLY
 
 sig_atomic_t volatile g_request_shutdown = 0;
 
@@ -77,21 +77,25 @@ class controller {
 
             command.linear = linear;
             command.angular = angular;
-
+            #ifndef NO_FLY
             controlPub.publish(command);
+            #endif
 
         }
 
         void startupRoutine() {
             
             ROS_INFO("Startup routine initiated");
-
+            
+            #ifndef NO_FLY
             // Sleep and then take off
             usleep(5000000);
             // Set to hover mode
             sendCommand( 0, 0, 0, 0);
             std_msgs::Empty msg; 
             takeoffPub.publish(msg);
+            usleep(2000000);
+            #endif
 
         }
 
@@ -128,7 +132,7 @@ class controller {
 
         int yawSVar = 320;
         int yawPVar;
-        int pitchSVar = 320;
+        int pitchSVar = 220;
         int pitchPVar;
 
         double yawOutput;
