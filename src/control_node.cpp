@@ -11,7 +11,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
 
-#define NO_FLY
+//#define NO_FLY
 
 sig_atomic_t volatile g_request_shutdown = 0;
 
@@ -23,7 +23,7 @@ class controller {
         
         // Initialize PID controllers
         // ( double dt, double max, double min, double Kp, double Kd, double Ki );
-        yawPid(0.1, 1.0, -1.0, 0.702, 4.9, 0.00006),
+        yawPid(0.1, 1.0, -1.0, 2, 0, 0),
         pitchPid(0.1, 1.0, -1.0, 0.702, 4.9, 0.00006) { 
 
             // Subscriber for object location
@@ -45,8 +45,9 @@ class controller {
         
 
         void objectCallback(const ardrone_object_tracking::ObjectMsg::ConstPtr &objectPos) {
-
-            yawPVar = objectPos->x;
+            
+            // Normalize process variable
+            yawPVar = (objectPos->x)/640;
             yawOutput = (yawPid.calculate(yawSVar, yawPVar));
             pitchPVar = objectPos->height;
             pitchOutput = (pitchPid.calculate(pitchSVar, pitchPVar));
@@ -54,12 +55,13 @@ class controller {
             ROS_INFO("Received object position: ");
             ROS_INFO(" X: %f , Y: %f, H : %f \n", objectPos->x, objectPos->y, objectPos->height);
             ROS_INFO("Yaw output : %f", yawOutput);
+            ROS_INFO("Yaw PVar : %f", yawPVar);
             
             sendCommand( 0, 0, 0, yawOutput);
         }
         
         // Send command to AR Drone
-        void sendCommand( int x, int y, int z, int yaw) {
+        void sendCommand( double x, double y, double z, double yaw) {
             
             // Linear and angular components
             geometry_msgs::Vector3 linear; 
@@ -130,10 +132,10 @@ class controller {
         PID yawPid;
         PID pitchPid;
 
-        int yawSVar = 320;
-        int yawPVar;
-        int pitchSVar = 220;
-        int pitchPVar;
+        double yawSVar = 0.5;
+        double yawPVar;
+        double pitchSVar = 220;
+        double pitchPVar;
 
         double yawOutput;
         double pitchOutput;
