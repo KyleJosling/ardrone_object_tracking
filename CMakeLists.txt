@@ -102,7 +102,7 @@ add_executable(control_node src/control_node.cpp)
    ${pid_LIBRARY}
  )
 add_definitions(-std=c++11 -g -O3)
-add_definitions(-DNO_FLY)
+#add_definitions(-DNO_FLY)
 
 #############
 ## Install ##
