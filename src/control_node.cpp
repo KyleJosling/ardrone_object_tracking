@@ -23,7 +23,7 @@ class controller {
         // Initialize PID controllers
         // ( double dt, double max, double min, double Kp, double Kd, double Ki );
         yawPid(0.1, 1.0, -1.0, 3, 0.5, 0.05),
-        pitchPid(0.1, 1.0, -1.0, 2, 0.25, 0.05) { 
+        pitchPid(0.1, 1.0, -1.0, 0.1, 0, 0) { 
 
             // Subscriber for object location
             objectSub = nH.subscribe(objectTopic, 1, &controller::objectCallback, this);
@@ -45,20 +45,27 @@ class controller {
 
         void objectCallback(const ardrone_object_tracking::ObjectMsg::ConstPtr &objectPos) {
             
-            // Normalize process variable
-            yawPVar = (objectPos->x)/640;
-            yawOutput = (yawPid.calculate(yawSVar, yawPVar));
-            pitchPVar = (objectPos->height)/320;
-            pitchOutput = (pitchPid.calculate(pitchSVar, pitchPVar));
+            // Hover if no object detected
+            if (objectPos->height == 0) {
 
-            ROS_INFO("Received object position: ");
-            ROS_INFO(" X: %f , Y: %f, H : %f \n", objectPos->x, objectPos->y, objectPos->height);
-            ROS_INFO("Yaw output : %f", yawOutput);
-            ROS_INFO("Pitch output : %f", pitchOutput);
-            ROS_INFO("Yaw PVar : %f", yawPVar);
-            ROS_INFO("Pitch PVar : %f", pitchPVar);
-            
-            sendCommand( pitchOutput, 0, 0, yawOutput);
+                sendCommand( 0, 0, 0, 0);
+
+            } else {
+                // Normalize process variable
+                yawPVar = (objectPos->x)/640;
+                yawOutput = (yawPid.calculate(yawSVar, yawPVar));
+                pitchPVar = (objectPos->height)/320;
+                pitchOutput = (pitchPid.calculate(pitchSVar, pitchPVar));
+
+                ROS_INFO("Received object position: ");
+                ROS_INFO(" X: %f , Y: %f, H : %f \n", objectPos->x, objectPos->y, objectPos->height);
+                ROS_INFO("Yaw output : %f", yawOutput);
+                ROS_INFO("Pitch output : %f", pitchOutput);
+                ROS_INFO("Yaw PVar : %f", yawPVar);
+                ROS_INFO("Pitch PVar : %f", pitchPVar);
+                
+                sendCommand( 0, 0, 0, yawOutput);
+            }
         }
         
         // Send command to AR Drone
@@ -133,7 +140,7 @@ class controller {
         PID yawPid;
         PID pitchPid;
 
-        double yawSVar = 0.5;
+        double yawSVar = 0.1;
         double yawPVar;
         double pitchSVar = 0.5;
         double pitchPVar;
