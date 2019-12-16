@@ -1,32 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(cuke_vision)
+project(ardrone_object_tracking)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
-  image_transport
+  ardrone_autonomy
   roscpp
   std_msgs
   message_generation
-  tf
-# NOTE : cv_bridge is causing linker issues. Refer here :https://answers.ros.org/question/312235/error-linking-to-opencv-dnn-library/ 
+  image_transport
+  cv_bridge
 )
 
-find_package(Boost REQUIRED COMPONENTS thread)
-
-set(OpenCV_DIR "/home/kylejosling/installation/OpenCV-3.4")
-find_package(OpenCV 3.4.8 EXACT REQUIRED)
-find_package(yaml-cpp REQUIRED)
-find_package(realsense2 REQUIRED)
-
-MESSAGE(WARNING "install path ${OpenCV_INSTALL_PATH}")
-MESSAGE(WARNING "include dirs ${OpenCV_INCLUDE_DIRS} ")
-MESSAGE(WARNING "library dirs ${OpenCV_LIBRARIES} ")
+find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -38,13 +28,14 @@ MESSAGE(WARNING "library dirs ${OpenCV_LIBRARIES} ")
 # Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  boundingBoxMsg.msg
+  ObjectMsg.msg
 )
 
 # Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -66,9 +57,9 @@ find_library(pid_LIBRARY pid)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cuke_vision 
-  CATKIN_DEPENDS roscpp std_msgs message_runtime
-  DEPENDS Boost OpenCV
+  LIBRARIES ardrone_object_tracking
+  CATKIN_DEPENDS ardrone_autonomy roscpp std_msgs geometry_msgs message_runtime
+  DEPENDS system_lib
 )
 
 ###########
@@ -79,10 +70,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -98,47 +87,23 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(cukeVisionNode src/cukeVisionNode.cpp src/detectObject.cpp)
- target_link_libraries(cukeVisionNode
-   ${OpenCV_LIBRARIES}
+add_executable(${PROJECT_NAME}_node src/ardrone_object_tracking_node.cpp src/detectObject.cpp)
+ target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
-   ${Boost_LIBRARIES}
+   ${OpenCV_LIBRARIES}
  )
 add_definitions(-std=c++11 -g -O3)
 add_definitions(-DGUI)
 
-add_executable(stereoCamNode src/stereoCamNode.cpp)
- target_link_libraries(stereoCamNode
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
-   ${pid_LIBRARY}
- )
-add_definitions(-std=c++11 -g -O3)
-add_definitions(-DGUI)
-
-add_executable(stemDetectionNode src/stemDetectionNode.cpp)
- target_link_libraries(stemDetectionNode
+add_executable(control_node src/control_node.cpp)
+ target_link_libraries(control_node
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${pid_LIBRARY}
  )
 add_definitions(-std=c++11 -g -O3)
-add_definitions(-DGUI)
+#add_definitions(-DNO_FLY)
 
-add_executable(baseFrameBroadcasterNode src/baseFrameBroadcasterNode.cpp)
- target_link_libraries(baseFrameBroadcasterNode
-   ${catkin_LIBRARIES}
-)
-
-add_executable(boundingBoxNode src/boundingBoxNode.cpp)
- target_link_libraries(boundingBoxNode
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
-   ${pid_LIBRARY}
-   ${realsense2_LIBRARY}
- )
-add_definitions(-std=c++11 -g -O3)
-add_definitions(-DGUI)
 #############
 ## Install ##
 #############
