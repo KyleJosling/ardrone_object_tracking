@@ -3,7 +3,7 @@
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/tracking/tracker.hpp>
 
-#include "ardrone_object_tracking/detectObject.hpp"
+#include "cuke_vision/detectObject.hpp"
 
 // Image processing function
 cv::Mat processImg(cv::Mat frame, int hue, int sat, int val, int width) {

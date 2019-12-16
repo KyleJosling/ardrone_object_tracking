@@ -6,7 +6,7 @@
 
 #include "pid.h"
 
-#include <ardrone_object_tracking/ObjectMsg.h>
+#include <cuke_vision/ObjectMsg.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
@@ -23,7 +23,7 @@ class controller {
         // Initialize PID controllers
         // ( double dt, double max, double min, double Kp, double Kd, double Ki );
         yawPid(0.1, 1.0, -1.0, 3, 0.5, 0.05),
-        pitchPid(0.1, 1.0, -1.0, 0.1, 0, 0) { 
+        pitchPid(0.1, 1.0, -1.0, 0.5, 0, 0) { 
 
             // Subscriber for object location
             objectSub = nH.subscribe(objectTopic, 1, &controller::objectCallback, this);
@@ -43,7 +43,7 @@ class controller {
         }
         
 
-        void objectCallback(const ardrone_object_tracking::ObjectMsg::ConstPtr &objectPos) {
+        void objectCallback(const cuke_vision::ObjectMsg::ConstPtr &objectPos) {
             
             // Hover if no object detected
             if (objectPos->height == 0) {
@@ -140,9 +140,9 @@ class controller {
         PID yawPid;
         PID pitchPid;
 
-        double yawSVar = 0.1;
+        double yawSVar = 0.5;
         double yawPVar;
-        double pitchSVar = 0.5;
+        double pitchSVar = 0.3;
         double pitchPVar;
 
         double yawOutput;
